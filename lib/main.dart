@@ -30,8 +30,9 @@ class GetMACAddressExample extends StatefulWidget {
 }
 
 class _GetMACAddressExampleState extends State<GetMACAddressExample> {
-  List<NetworkInfo> _networkInfo = [];
+  List<String> _selectedMacAdress = [];
   bool _loading = true;
+  // List<NetworkInfo> _networkInfo = [];
 
   @override
   void initState() {
@@ -44,8 +45,19 @@ class _GetMACAddressExampleState extends State<GetMACAddressExample> {
       requiredValues: [WindowsSystemInfoFeat.network],
     );
     if (await WindowsSystemInfo.isInitilized) {
+      final macAddress = WindowsSystemInfo.network
+          .where((e) =>
+              e.ifaceName.contains('Ethernet') &&
+              e.mac.isNotEmpty &&
+              e.type != 'virtual')
+          .map((e) => e.mac)
+          .toList();
+      flutter.debugPrint("Data: $macAddress");
+
       setState(() {
-        _networkInfo = WindowsSystemInfo.network;
+        _selectedMacAdress = macAddress;
+        // _networkInfo = WindowsSystemInfo.network;
+        // flutter.debugPrint("Network Data : $_networkInfo");
         _loading = false;
       });
     }
@@ -61,28 +73,23 @@ class _GetMACAddressExampleState extends State<GetMACAddressExample> {
           ? const Center(
               child: CircularProgressIndicator(),
             )
-          : _networkInfo.isEmpty
+          : _selectedMacAdress.isEmpty
               ? const Text("No Network Found")
               : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: _networkInfo.map((adapter) {
-                      final macAddress = adapter.mac;
-                      flutter.debugPrint("MAC Address is : $macAddress");
-                      return Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: ListTile(
-                          title: Text('Adapter: ${adapter.ifaceName}'),
-                          subtitle: Text(
-                            'MAC Address: $macAddress',
+                  child: Center(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: _selectedMacAdress.map((e) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'MAC Address: $e',
                             style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.w700,
-                            ),
+                                color: Colors.red, fontWeight: FontWeight.w700),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
     );
